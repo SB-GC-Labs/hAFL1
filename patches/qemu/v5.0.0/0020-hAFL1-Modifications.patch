@@ -1,0 +1,126 @@
+From ce77a01c10a1363dc4ccfa2c45dd12bdddc70562 Mon Sep 17 00:00:00 2001
+From: ophirharpazg <ophir.harpaz@guardicore.com>
+Date: Mon, 5 Jul 2021 11:44:49 +0200
+Subject: [PATCH] hAFL1 Modifications
+
+---
+ accel/kvm/kvm-all.c       |  9 ++++++++-
+ linux-headers/linux/kvm.h |  2 ++
+ pt/hypercall.c            | 26 ++++++++++++++++++++++++++
+ pt/hypercall.h            |  3 +++
+ pt/interface.h            |  1 +
+ 5 files changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/accel/kvm/kvm-all.c b/accel/kvm/kvm-all.c
+index 0672032e..ea0c16b6 100644
+--- a/accel/kvm/kvm-all.c
++++ b/accel/kvm/kvm-all.c
+@@ -2500,7 +2500,14 @@ int kvm_cpu_exec(CPUState *cpu)
+             handle_hypercall_kafl_printk(run, cpu);
+             ret = 0;
+             break;
+-
++        case KVM_EXIT_KAFL_CRASH_DUMP:
++             handle_hypercall_kafl_crash_dump(run, cpu);
++             ret = 0;
++             break;
++        case KVM_EXIT_KAFL_CRASH_DUMP_SIZE:
++             handle_hypercall_kafl_crash_dump_size(run, cpu);
++             ret = 0;
++             break;        
+         /* user space only exit reasons */
+         case KVM_EXIT_KAFL_USER_RANGE_ADVISE:
+             handle_hypercall_kafl_user_range_advise(run, cpu);
+diff --git a/linux-headers/linux/kvm.h b/linux-headers/linux/kvm.h
+index 8de7be9c..ddcc307e 100644
+--- a/linux-headers/linux/kvm.h
++++ b/linux-headers/linux/kvm.h
+@@ -266,6 +266,8 @@ struct kvm_hyperv_exit {
+ #define KVM_EXIT_KAFL_TOPA_MAIN_FULL	119
+ #define KVM_EXIT_KAFL_USER_ABORT		120
+ #define KVM_EXIT_KAFL_TIMEOUT			121
++#define KVM_EXIT_KAFL_CRASH_DUMP        122
++#define KVM_EXIT_KAFL_CRASH_DUMP_SIZE   123
+ 
+ 
+ /* For KVM_EXIT_INTERNAL_ERROR */
+diff --git a/pt/hypercall.c b/pt/hypercall.c
+index 92a264e6..13ead004 100644
+--- a/pt/hypercall.c
++++ b/pt/hypercall.c
+@@ -34,6 +34,8 @@
+ #include "pt/redqueen.h"
+ #endif
+ 
++#define CRASH_DUMP_FILE "/root/crash.dmp"
++
+ bool hprintf_enabled = false;
+ bool notifiers_enabled = false;
+ uint32_t hprintf_counter = 0;
+@@ -47,6 +49,8 @@ char info_buffer[INFO_SIZE];
+ char hprintf_buffer[HPRINTF_SIZE];
+ void* argv = NULL;
+ 
++static uint64_t crash_dump_size = 0;
++
+ static bool init_state = true;
+ 
+ void (*handler)(char, void*) = NULL; 
+@@ -400,6 +404,28 @@ void handle_hypercall_kafl_info(struct kvm_run *run, CPUState *cpu){
+ 	qemu_system_shutdown_request(SHUTDOWN_CAUSE_HOST_SIGNAL);
+ }
+ 
++void handle_hypercall_kafl_crash_dump_size(struct kvm_run *run, CPUState *cpu){
++       crash_dump_size = (uint64_t)run->hypercall.args[0];
++       QEMU_PT_PRINTF(CORE_PREFIX, "Got Crash Dump Size Hypercall: 0x%x!", crash_dump_size);
++       hypercall_snd_char(KAFL_PROTO_CRASH_DUMP);
++}
++
++void handle_hypercall_kafl_crash_dump(struct kvm_run *run, CPUState *cpu){
++       QEMU_PT_PRINTF(CORE_PREFIX, "Got Crash Dump Hypercall!");
++       char *crash_dump_buffer = NULL;
++       crash_dump_buffer = (char*)malloc(crash_dump_size);
++
++       memset(crash_dump_buffer, 0, crash_dump_size);
++       read_virtual_memory((uint64_t)run->hypercall.args[0], (uint8_t*)crash_dump_buffer, crash_dump_size, cpu);
++       FILE* crash_dump_fd = fopen(CRASH_DUMP_FILE, "a+b");
++       fwrite(crash_dump_buffer, crash_dump_size, 1, crash_dump_fd);
++        fflush(crash_dump_fd);
++       fclose(crash_dump_fd);
++       free(crash_dump_buffer);
++       hypercall_snd_char(KAFL_PROTO_CRASH_DUMP);
++
++}
++
+ void enable_hprintf(void){
+ 	QEMU_PT_DEBUG(CORE_PREFIX, "Enable hprintf support");
+ 	hprintf_enabled = true;
+diff --git a/pt/hypercall.h b/pt/hypercall.h
+index 7f8aadc7..8cf6f8dd 100644
+--- a/pt/hypercall.h
++++ b/pt/hypercall.h
+@@ -120,6 +120,9 @@ void handle_hypercall_kafl_user_range_advise(struct kvm_run *run, CPUState *cpu)
+ void handle_hypercall_kafl_user_submit_mode(struct kvm_run *run, CPUState *cpu);
+ void handle_hypercall_kafl_user_abort(struct kvm_run *run, CPUState *cpu);
+ 
++void handle_hypercall_kafl_crash_dump(struct kvm_run *run, CPUState *cpu);
++void handle_hypercall_kafl_crash_dump_size(struct kvm_run *run, CPUState *cpu);
++
+ void hprintf(char* msg);
+ void enable_hprintf(void);
+ void enable_notifies(void);
+diff --git a/pt/interface.h b/pt/interface.h
+index ec1f6522..707b630a 100644
+--- a/pt/interface.h
++++ b/pt/interface.h
+@@ -35,6 +35,7 @@
+ #define KAFL_PROTO_COMMIT_FILTER	'T'
+ #define KAFL_PROTO_FINALIZE			'F'
+ #define KAFL_PROTO_CONNECT			'Y'
++#define KAFL_PROTO_CRASH_DUMP       'J'
+ 
+ #ifdef CONFIG_REDQUEEN
+ #define KAFL_PROTO_ENABLE_RQI_MODE	'A'
+-- 
+2.25.1
+

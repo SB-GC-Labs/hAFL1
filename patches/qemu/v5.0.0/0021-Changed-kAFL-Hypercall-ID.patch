@@ -1,0 +1,25 @@
+From bd1155f96f0022570eeb684455a0ba71722ee2d4 Mon Sep 17 00:00:00 2001
+From: ophirharpazg <ophir.harpaz@guardicore.com>
+Date: Tue, 6 Jul 2021 12:11:53 +0200
+Subject: [PATCH] Changed kAFL Hypercall ID to 35
+
+---
+ linux-headers/linux/kvm.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/linux-headers/linux/kvm.h b/linux-headers/linux/kvm.h
+index ddcc307e..a0bc6707 100644
+--- a/linux-headers/linux/kvm.h
++++ b/linux-headers/linux/kvm.h
+@@ -237,7 +237,7 @@ struct kvm_hyperv_exit {
+ #define KVM_EXIT_HYPERV           27
+ #define KVM_EXIT_ARM_NISV         28
+ 
+-#define HYPERCALL_KAFL_RAX_ID			0x01f
++#define HYPERCALL_KAFL_RAX_ID			35
+ #define KAFL_EXIT_OFFSET				100
+ 
+ #define KVM_EXIT_KAFL_ACQUIRE			100
+-- 
+2.25.1
+

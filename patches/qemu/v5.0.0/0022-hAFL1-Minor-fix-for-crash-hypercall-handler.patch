@@ -1,0 +1,50 @@
+From 7c8495350da9e2555d107b9da896eec9f746f494 Mon Sep 17 00:00:00 2001
+From: ophirharpazg <ophir.harpaz@guardicore.com>
+Date: Mon, 12 Jul 2021 14:07:57 +0200
+Subject: [PATCH] hAFL1 - Minor fix for crash hypercall handler
+
+---
+ pt/hypercall.c | 27 ++++++++++++++-------------
+ 1 file changed, 14 insertions(+), 13 deletions(-)
+
+diff --git a/pt/hypercall.c b/pt/hypercall.c
+index 13ead004..2d47d943 100644
+--- a/pt/hypercall.c
++++ b/pt/hypercall.c
+@@ -411,19 +411,20 @@ void handle_hypercall_kafl_crash_dump_size(struct kvm_run *run, CPUState *cpu){
+ }
+ 
+ void handle_hypercall_kafl_crash_dump(struct kvm_run *run, CPUState *cpu){
+-       QEMU_PT_PRINTF(CORE_PREFIX, "Got Crash Dump Hypercall!");
+-       char *crash_dump_buffer = NULL;
+-       crash_dump_buffer = (char*)malloc(crash_dump_size);
+-
+-       memset(crash_dump_buffer, 0, crash_dump_size);
+-       read_virtual_memory((uint64_t)run->hypercall.args[0], (uint8_t*)crash_dump_buffer, crash_dump_size, cpu);
+-       FILE* crash_dump_fd = fopen(CRASH_DUMP_FILE, "a+b");
+-       fwrite(crash_dump_buffer, crash_dump_size, 1, crash_dump_fd);
+-        fflush(crash_dump_fd);
+-       fclose(crash_dump_fd);
+-       free(crash_dump_buffer);
+-       hypercall_snd_char(KAFL_PROTO_CRASH_DUMP);
+-
++	char crashPath[256] = {0};
++	int32_t pid = (int32_t)getpid();
++	sprintf(crashPath, "/root/tmp_crashes/%d.log", pid);
++	QEMU_PT_PRINTF(CORE_PREFIX, "Got Crash Dump Hypercall!");
++	char *crash_dump_buffer = NULL;
++	crash_dump_buffer = (char*)malloc(crash_dump_size);
++	memset(crash_dump_buffer, 0, crash_dump_size);
++	read_virtual_memory((uint64_t)run->hypercall.args[0], (uint8_t*)crash_dump_buffer, crash_dump_size, cpu);
++	FILE* crash_dump_fd = fopen(crashPath, "a+b");
++	fwrite(crash_dump_buffer, crash_dump_size, 1, crash_dump_fd);
++ 	fflush(crash_dump_fd);
++	fclose(crash_dump_fd);
++	free(crash_dump_buffer);
++	hypercall_snd_char(KAFL_PROTO_CRASH_DUMP);
+ }
+ 
+ void enable_hprintf(void){
+-- 
+2.25.1
+

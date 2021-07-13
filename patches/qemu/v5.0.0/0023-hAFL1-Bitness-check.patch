@@ -1,0 +1,33 @@
+From 8996cda4dee7a5ac1798888fcd870c31612f8ca9 Mon Sep 17 00:00:00 2001
+From: Peleg Hadar <peleg.hadar.w@gmail.com>
+Date: Tue, 13 Jul 2021 09:25:50 +0200
+Subject: [PATCH] hAFL1 - Bitness check
+
+---
+ pt/hypercall.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/pt/hypercall.c b/pt/hypercall.c
+index 2d47d943..d479c0a5 100644
+--- a/pt/hypercall.c
++++ b/pt/hypercall.c
+@@ -279,6 +279,16 @@ void handle_hypercall_get_payload(struct kvm_run *run, CPUState *cpu){
+ 		QEMU_PT_PRINTF(CORE_PREFIX, "Got payload address:\t%llx", run->hypercall.args[0]);
+ 		payload_buffer_guest = (void*)run->hypercall.args[0];
+ 		write_virtual_memory((uint64_t)payload_buffer_guest, payload_buffer, PAYLOAD_SIZE, cpu);
++
++		if (cpu->disassembler_word_width == 0) {
++			if (run->hypercall.longmode) {
++				QEMU_PT_PRINTF(CORE_PREFIX, "Auto-detected word width as 64bit (longmode=%d)", run->hypercall.longmode);
++				cpu->disassembler_word_width = 64;
++			} else {
++				QEMU_PT_PRINTF(CORE_PREFIX, "Auto-detected word width as 32bit (longmode=%d)", run->hypercall.longmode);
++				cpu->disassembler_word_width = 32;
++			}
++		}
+ 	}
+ }
+ 
+-- 
+2.25.1
+
