@@ -24,7 +24,7 @@ execution_result can be one of the following: `regular, crash, kasan, timeout`
 
 5. Next, The `unique_edges.sh` script must be used in order to merge all of the trace files into a single file which contains the addresses of the unique edges: `[kAFL_work_folder]\edges_uniq.lst`
 
-6. Last but not least, the Unique Edges file must be converted to Lighthouse compatible format by using our own script `convert_kAFL_coverage_to_lighthouse.py`.
+6. Last but not least, the Unique Edges file must be converted to Lighthouse compatible format by using our own script [`convert_kAFL_coverage_to_lighthouse.py`](https://github.com/SB-GC-Labs/hAFL1/blob/main/tools/convert_kAFL_coverage_to_lighthouse.py).
 
 ---
 ## How To (Step-By-Step)
