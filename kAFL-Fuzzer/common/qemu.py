@@ -577,13 +577,13 @@ class qemu:
 
     # TODO: can directly return result for handling by caller?
     # TODO: document protocol and meaning/effect of each message
-    def check_recv(self, timeout_detection=False):
+    def check_recv(self, timeout_detection=True):
         if timeout_detection and not self.config.argument_values['forkserver']:
             ready = select.select([self.control], [], [], 0.25)
             if not ready[0]:
                 return 2
         else:
-            ready = select.select([self.control], [], [], 25.0)
+            ready = select.select([self.control], [], [], 5.0)
             if not ready[0]:
                 return 2
 
@@ -632,7 +632,7 @@ class qemu:
         result = self.__debug_recv()
         return result
 
-    def send_payload(self, apply_patches=False, timeout_detection=False, max_iterations=10):
+    def send_payload(self, apply_patches=False, timeout_detection=True, max_iterations=10):
 
         if (self.debug_mode):
             log_qemu("Send payload..", self.qemu_id)
