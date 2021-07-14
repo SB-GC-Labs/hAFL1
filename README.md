@@ -164,5 +164,23 @@ See [this guide](https://github.com/SB-GC-Labs/hAFL1/blob/main/coverage_analysis
 
 
 ### Integrating LPBM
-`<TODO>`
+
+We’ve integrated structure-awareness into hAFL1 by represending RNDIS packets as [_Protocol Buffers_](https://developers.google.com/protocol-buffers) and mutating them using [_libprotobuf-mutator_](https://github.com/google/libprotobuf-mutator). As we never quite “productionized” this integration (and left it only as a PoC), we decided to give a general outline of the implementation instead of releasing half-working code.
+
+The following are the steps we took to integrate structure-based mutations into hAFL1:
+
+1. We wrote `.proto` files that represent RNDIS packets and compiled them using Protocol Buffers compiler (_protoc_) into source and header files (`rndis.cc, rndis.h}`).
+2. We wrote two conversion functions:
+   a. `ProtoToData` - conversion from a Protocol Buffer object to a binary buffer.
+   b. `DataToProto` - conversion in the opposite direction.
+   These functions allowed us to mutate Protocol Buffers objects but eventually send them as binary payloads to our fuzzed target (vmswitch.sys).
+3. We used _libprotobuf-mutator_ in order to apply field-based mutations on the Protocol Buffer objects. We also overrode some of the `Mutator` class’s mutation methods with those of [_libfuzzer_](https://llvm.org/docs/LibFuzzer.html), as we found them more efficient. However, this is completely optional.
+4. Finally, we compiled a shared object (`rndis_fuzzer.so`) which exports two functions:
+   * `afl_custom_init` which initializes a `Mutator` object with a random seed value.
+   * `afl_custom_fuzz` which takes a single fuzzing input in binary format, converts it to a Protobuf object using `DataToProto()`, mutates it, converts back to binary using `ProtoToData()` and returns the binary buffer.
+5. For integration with _hAFL1_, we added a new state to the `state_logic.py` file (in function `process_node()`). The new state, which we named _LPBM_ for _Lib-Proto-Buf-Mutator_, calls `afl_custom_fuzz()` with the current payload to generate a newly-mutated fuzzing input.
+6. We’ve also made some modifications to `kafl_gui.py` to support the display of the new LPBM state.
+
+![Strcture Awareness General Outline](https://github.com/SB-GC-Labs/hAFL1/blob/main/images/StructureAwareness.png?raw=true)
+
 
