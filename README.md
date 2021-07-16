@@ -52,10 +52,15 @@ __Note__: During the installation, whenever Windows tries to restart, QEMU might
    Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CrashControl" -Name "CrashDumpEnabled" -Value 0
    ```
 
-8. Enable Hyper-V on the VM by running the following within a PowerShell console as Administrator: 
+8. Disable Fast Startup from within an elevated command prompt:
+```
+REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V HiberbootEnabled /T REG_DWORD /D 1 /F
+```
+
+9. Enable Hyper-V on the VM by running the following within a PowerShell console as Administrator: 
    
    ```Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All```
-9. Create an empty VM by using PowerShell console as Administrator:
+10. Create an empty VM by using PowerShell console as Administrator:
    
    ```New-VM -Name "VM" -MemoryStartupBytes 512MB```
 
