@@ -1,3 +1,6 @@
+# Print Unique Crashes
+Use the `./hAFL1/tools/print_uniq_crashes.py` script.  
+
 # kAFL to Lighthouse (Coverage Converter)
 
 The following `README` explains how to:

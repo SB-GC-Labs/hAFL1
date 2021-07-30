@@ -77,7 +77,7 @@ REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power" /V Hiberbo
    * __Harness.sys__, __Harness.inf__, __Harness.cat__, __Harness.cer__ (Harness folder in hAFL1 Repo) - these files comprise the harness driver
    * __loader.exe__ (`./hAFL1/targets/windows_86_64/bin/loader/loader.exe`) - this is a kAFL-provided binary which loads
    * __StructsInitiator.exe__ - This will prepare all necessary structures in vmswitch for the fuzzing process
-   * VMSwitchInitBuffer.bin - this is a file required by StructsInitiator.exe
+   * VMSwitchInitBuffer.bin (`./hAFL1/Harness/StructsInitiator/VMSwitchInitBuffer.bin`)- this is a file required by StructsInitiator.exe
    * EfiDSEFix.exe (Download [here](https://github.com/Mattiwatti/EfiGuard/releases/download/v1.2.1/EfiGuard-v1.2.1.zip))
 
 4. Copy the files from the dedicated folder to the VM by running:

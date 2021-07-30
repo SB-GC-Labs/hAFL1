@@ -1,0 +1,175 @@
+;-------------------------------------------------------------------------
+; Harness.INF -- KMDF Driver
+;
+; Copyright (c) 2019, Microsoft.Com LLC.  All rights reserved.
+;------------------------------------------------------------------------
+
+; KMDF INF MSDN: https://docs.microsoft.com/en-us/windows-hardware/drivers/wdf/using-inx-files-to-create-inf-files
+;
+; Class And ClassGuid MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/ifs/file-system-filter-driver-classes-and-class-guids
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/system-defined-device-setup-classes-available-to-vendors
+[version]
+Signature       = "$Windows NT$"
+Class           = %ClassName%
+ClassGUID       = {78A1C341-4539-11d3-B88D-00C04FAD5171}
+Provider        = %ManufacturerName%
+CatalogFile     = %DriverName%.cat
+DriverVer       = 01/11/2019,9.43.55.74
+
+
+; Manufacturer MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-manufacturer-section
+[Manufacturer]
+%ManufacturerName%=Standard,,NTx86,NTamd64
+
+; Models MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-models-section
+; hw_id(Hardware ID) MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/hardware-ids
+[Standard.NTx86]
+%ServiceDesc%=Install, Root\Harness ; hw_id
+
+[Standard.NTamd64]
+%ServiceDesc%=Install, Root\Harness ; hw_id
+
+
+;-------------------------------------------------------------------------
+; Class section 
+;-------------------------------------------------------------------------
+
+
+[ClassInstall32]
+Addreg                  = ClassInstall.Reg
+
+[ClassInstall.Reg]
+HKR,,,0,%ClassName%
+HKR,,Icon,,-5
+
+
+;-------------------------------------------------------------------------
+; Installation Section
+;-------------------------------------------------------------------------
+
+
+[Install.NTx86]
+CopyFiles               = Install.Copyfiles.NTx86
+
+[Install.NTamd64]
+CopyFiles               = Install.Copyfiles.NTamd64
+
+[Install.Remove]
+DelFiles                = Install.Delfiles
+
+
+; DestinationDirs MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-destinationdirs-section
+[DestinationDirs]
+DefaultDestDir          = 12
+CoInstaller.Copyfiles   = 11
+
+
+; SourceDisksNames MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksnames-section
+[SourceDisksNames]
+1=%DiskId%,"",,
+
+
+; SourceDisksFiles MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-sourcedisksfiles-section
+; Each filename entry must specify the exact name of a file on the source disk. 
+;     You cannot use a %strkey% token to specify the file name.
+[SourceDisksFiles]
+Harness.sys        = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+[SourceDisksFiles.x86]
+Harness.x86.sys    = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1
+
+[SourceDisksFiles.amd64]
+Harness.sys    = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1
+
+
+; Copyfiles MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-copyfiles-directive
+[Install.Copyfiles.NTx86]
+%DriverName%.sys,%DriverName%.x86.sys,,0x00004022 ; COPYFLG_NOSKIP | COPYFLG_NO_VERSION_DIALOG | COPYFLG_IN_USE_RENAME
+
+[Install.Copyfiles.NTamd64]
+%DriverName%.sys,%DriverName%.sys,,0x00004022
+
+
+; Delfiles MSDN:
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-delfiles-directive
+[Install.Delfiles]
+%DriverName%.sys
+
+
+;-------------------------------------------------------------------------
+; Service installation support
+;-------------------------------------------------------------------------
+
+
+[Install.NTx86.Services]
+; You may want to add the SPSVCINST_STARTSERVICE flag, like this:
+;     AddService=%ServiceName%,0x800,InstallService.Arch ; SPSVCINST_STARTSERVICE
+; AddService MSDN
+;     https://docs.microsoft.com/en-us/windows-hardware/drivers/install/inf-addservice-directive
+AddService = %ServiceName%,0x00000002,InstallService
+
+[Install.NTamd64.Services]
+AddService = %ServiceName%,0x00000002,InstallService
+
+
+[InstallService]
+DisplayName     = %ServiceDesc%
+Description     = %ServiceDesc%
+ServiceBinary   = %12%\%DriverName%.sys
+ServiceType     = 1                 ;SERVICE_KERNEL_DRIVER
+StartType       = 3                 ; 0 = SERVICE_BOOT_START
+                                    ; 1 = SERVICE_SYSTEM_START
+                                    ; 2 = SERVICE_AUTO_START
+                                    ; 3 = SERVICE_DEMAND_START
+                                    ; 4 = SERVICE_DISABLED
+ErrorControl    = 1                 ;SERVICE_ERROR_NORMAL
+
+
+[Install.Remove.Services]
+DelService = %ServiceName%,0x200    ; SPSVCINST_STOPSERVICE
+
+
+;-------------------------------------------------------------------------
+; Install Coinstaller installation
+;-------------------------------------------------------------------------
+
+
+[Install.NT.CoInstallers]
+AddReg      = CoInstaller.Reg
+CopyFiles   = CoInstaller.Copyfiles
+
+[CoInstaller.Reg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[CoInstaller.Copyfiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[Install.NT.Wdf]
+KmdfService         = %ServiceName%, WDFSection
+[WDFSection]
+KmdfLibraryVersion  = $KMDFVERSION$
+
+
+;-------------------------------------------------------------------------
+; Strings section
+;-------------------------------------------------------------------------
+
+
+[Strings]
+ClassName           = "Samples"
+ManufacturerName    = "Harness"
+DriverName          = "Harness"
+ServiceName         = "Harness"
+ServiceDesc         = "Harness KMDF Driver"
+DiskId              = "Harness Installation Disk"
