@@ -170,7 +170,7 @@ See [this guide](https://github.com/SB-GC-Labs/hAFL1/blob/main/coverage_analysis
 
 ### Integrating LPBM
 
-We’ve integrated structure-awareness into hAFL1 by represending RNDIS packets as [_Protocol Buffers_](https://developers.google.com/protocol-buffers) and mutating them using [_libprotobuf-mutator_](https://github.com/google/libprotobuf-mutator). As we never quite “productionized” this integration (and left it only as a PoC), we decided to give a general outline of the implementation instead of releasing half-working code.
+We’ve integrated structure-awareness into hAFL1 by representing RNDIS packets as [_Protocol Buffers_](https://developers.google.com/protocol-buffers) and mutating them using [_libprotobuf-mutator_](https://github.com/google/libprotobuf-mutator). As we never quite “productionized” this integration (and left it only as a PoC), we decided to give a general outline of the implementation instead of releasing half-working code.
 
 The following are the steps we took to integrate structure-based mutations into hAFL1:
 
